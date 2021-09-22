@@ -26,6 +26,7 @@ public:
     friend ofstream & operator << (ofstream &of, List &a) {
         for(auto it = a.head; it != nullptr; it = it -> next)
             of << "\"" << it -> word << "\":" << it -> num << endl;
+        return of;
     }
 
     Node *create_node(Node *x) {
@@ -196,11 +197,30 @@ void read_stopwords(const string &stopwords_path, Trie &tr) {
     }
 }
 
-inline string bigtolow(string str) {
-    for(auto it = str.begin(); it != str.end(); it ++)
-        if(*it >= 'A' && *it <= 'Z')    *it = *it + 32;
-    return str;
-}
+void format(vector<string> & words) {
+    int i, j;
+    string word = words[0];
+    words.clear();
+    for (i = 0; i < word.size(); ++i) {
+        if (word[i] >= 'A' && word[i] <= 'Z') {
+            word[i] += 32;
+        }
+    }
+    for (i = 0; i < word.size(); ++i) {
+        if (word[i] >= 'a' && word[i] <= 'z' || word[i] == '\'') {break;}
+    }
+    while (i < word.size()) {
+        for (j = i + 1; j < word.size(); ++j) {
+            if (!(word[j] >= 'a' && word[j] <= 'z')) {break;}
+        }
+        if (!(i + 1 == j && word[i] == '\'')) {
+            words.push_back(word.substr(i, j - i));
+        }
+        for (i = j; i < word.size(); ++i) {
+            if (word[i] >= 'a' && word[i] <= 'z' || word[i] == '\'') {break;}
+        } 
+    }
+  }
 
 void read_book(const string &path, Trie tr) {
     ifstream f(path);
@@ -208,15 +228,15 @@ void read_book(const string &path, Trie tr) {
     List <string> l[27];
     int tim = 0;
     while(f >> str) {
-        str = bigtolow(str);
-        while(!str.empty() && !(str[0] >= 'a' && str[0] <= 'z'))    str.erase(str.begin());
-        while(!str.empty() && !(str[str.length() - 1] >= 'a' && str[str.length() - 1] <= 'z'))
-            str.erase(str.end() - 1);
-        if(str.empty()) continue ;
-        if(tr.find_word(str))    continue ;
-        int opt = str[0] - 'a';
-        // cout << str << ':' << opt << endl;
-        l[opt].insert_lex(str);
+        vector<string> words;
+        words.push_back(str);
+        format(words);
+        for (auto word : words) {
+            if(tr.find_word(word))   continue ;
+            int opt = word[0] - 'a';
+            //cout << str << ':' << opt << endl;
+            l[opt].insert_lex(word);
+        }
     }
     ofstream of("output.txt");
     List <string> li;
