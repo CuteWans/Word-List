@@ -14,12 +14,10 @@ class List {
     };
     Node *head, *tail;
     int len;
-    vector<pair <Node *, int>> pii;
 public:
     List() {
         head = nullptr;
         tail = nullptr;
-        pii.clear();
         len = 0;
     };
 
@@ -58,7 +56,7 @@ public:
             if(str > it -> word && (it -> next == nullptr || str < it -> next -> word)) {
                 auto nd = new Node;
                 nd -> next = it -> next;
-                nd -> num = 1;
+                nd -> num = 0;
                 nd -> word = str;
                 it -> next = nd;
             } else if(str == it -> word) {
@@ -112,7 +110,17 @@ public:
             insert_digit(it);
     }
 
-    ~List() {}
+    void clear() {
+        for(auto it = head; it != nullptr;) {
+            auto nit = it -> next;
+            delete it;
+            it = nit;
+        }
+    }
+
+    ~List() {
+        clear();
+    }
 };
 
 class Trie {
@@ -186,13 +194,22 @@ public:
         //cout << endl;
         return nd -> cnt;
     }
-    ~Trie() {}
+    void clear(Node *nd) {
+        if(nd == nullptr)   return ;
+        clear(nd -> next);
+        clear(nd -> son);
+        delete nd;
+    }
+    ~Trie() {
+        clear(root);
+    }
 };
 
 void read_stopwords(const string &stopwords_path, Trie &tr) {
     ifstream f1(stopwords_path);
     string words;
     while(f1 >> words) {
+        //cout << words << endl;
         tr.insert_stopwords(words);
     }
 }
@@ -222,7 +239,7 @@ void format(vector<string> & words) {
     }
   }
 
-void read_book(const string &path, Trie tr) {
+void read_book(const string &path, Trie &tr) {
     ifstream f(path);
     string str;
     List <string> l[27];
@@ -233,6 +250,10 @@ void read_book(const string &path, Trie tr) {
         format(words);
         for (auto word : words) {
             if(tr.find_word(word))   continue ;
+            if (word[0] == '\'') {
+                word.erase(word.begin());
+                if(tr.find_word(word))   continue ;
+            }
             int opt = word[0] - 'a';
             //cout << str << ':' << opt << endl;
             l[opt].insert_lex(word);
